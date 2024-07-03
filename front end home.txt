@@ -1,0 +1,322 @@
+views:
+  - title: Home
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: vazao maxima e média por minuto
+              show_states: false
+              colorize_states: true
+            apex_config:
+              chart:
+                extend_to: now
+              yaxis:
+                min: 0
+                title:
+                  text: L/min
+              stroke:
+                show: true
+                width: 2
+              legend:
+                show: true
+              experimental:
+                brush: true
+            graph_span: 1month
+            span:
+              end: day
+            series:
+              - entity: sensor.influxdb_read
+                name: vazão Máximo Medido
+                extend_to: false
+                group_by:
+                  duration: 24hour
+                  func: max
+                unit: L/min
+                show:
+                  legend_value: false
+                type: column
+                data_generator: |
+                  var params = new URLSearchParams({
+                      db: "fluxoagua",
+                      q: "SELECT \"valor_vazao\" FROM \"fluxoagua\".\"autogen\".\"L/min\" WHERE \"valor_vazao\" > 0 AND \"valor_vazao\" < 25; "
+                      });
+
+                  var myInit = { method: 'GET',
+                                  headers: {
+                                      'Accept': 'application/json',
+                                  },
+                                  mode: 'cors',
+                                  cache: 'default' 
+                  };
+
+                  const request = async () => {
+                      var result = [];
+                      const response = await fetch('http://10.0.0.6:8086/query?' + params, myInit)
+                      const json = await response.json();
+                      if (json["results"] && json["results"][0] && json["results"][0]["series"]  && json["results"][0]["series"][0] && json["results"][0]["series"][0]["values"]) {
+                          for(var val of json["results"][0]["series"][0]["values"]) {
+                              result.push([new Date(val[0]), val[1]]);
+                          }
+                      } else {
+                          console.log("error: " + json)
+                      }
+                      console.log("return: " + json) 
+                      return result;
+                  }
+                  return request();
+              - entity: sensor.influxdb_read_2
+                name: Média
+                group_by:
+                  duration: 24hour
+                  func: avg
+                type: line
+                unit: L/min
+                show:
+                  legend_value: false
+                data_generator: |
+                  var params = new URLSearchParams({
+                      db: "fluxoagua",
+                      q: "SELECT \"valor_vazao\" FROM \"fluxoagua\".\"autogen\".\"L/min\" WHERE \"valor_vazao\" > 0 AND \"valor_vazao\" < 25; "
+                      });
+
+                  var myInit = { method: 'GET',
+                                  headers: {
+                                      'Accept': 'application/json',
+                                  },
+                                  mode: 'cors',
+                                  cache: 'default' 
+                  };
+
+                  const request = async () => {
+                      var result = [];
+                      const response = await fetch('http://10.0.0.6:8086/query?' + params, myInit)
+                      const json = await response.json();
+                      if (json["results"] && json["results"][0] && json["results"][0]["series"]  && json["results"][0]["series"][0] && json["results"][0]["series"][0]["values"]) {
+                          for(var val of json["results"][0]["series"][0]["values"]) {
+                              result.push([new Date(val[0]), val[1]]);
+                          }
+                      } else {
+                          console.log("error: " + json)
+                      }
+                      console.log("return: " + json) 
+                      return result;
+                  }
+                  return request();
+            update_interval: 1m
+          - graph: line
+            type: sensor
+            entity: sensor.water
+            detail: 1
+            icon: mdi:water
+          - type: tile
+            entity: input_boolean.notify_val
+          - type: tile
+            entity: input_boolean.notify_vazamento
+            tap_action:
+              action: toggle
+            icon_tap_action:
+              action: toggle
+            hide_state: false
+            icon: mdi:home-alert
+            color: red
+            name: Vazamento Identificado
+            show_entity_picture: false
+      - type: grid
+        cards:
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Consumo de agua em Litros por Dia
+              show_states: false
+              colorize_states: true
+            apex_config:
+              chart:
+                extend_to: now
+              yaxis:
+                min: 0
+                title:
+                  text: Litros
+              stroke:
+                show: true
+                width: 2
+              legend:
+                show: true
+              experimental:
+                brush: true
+            graph_span: 1month
+            span:
+              end: day
+            series:
+              - entity: sensor.influxdb_read
+                type: column
+                name: Consumo Diário
+                color: '#acd373'
+                extend_to: false
+                unit: Litros
+                show:
+                  in_brush: true
+                  legend_value: false
+                group_by:
+                  duration: 24hour
+                  func: sum
+                data_generator: |
+                  var params = new URLSearchParams({
+                      db: "fluxoagua",
+                      q: "SELECT \"litrosmedidosemseg\" FROM \"fluxoagua\".\"autogen\".\"L/min\" WHERE \"litrosmedidosemseg\" > 0 AND \"litrosmedidosemseg\" < 25; "
+                      });
+
+                  var myInit = { method: 'GET',
+                                  headers: {
+                                      'Accept': 'application/json',
+                                  },
+                                  mode: 'cors',
+                                  cache: 'default' 
+                  };
+
+                  const request = async () => {
+                      var result = [];
+                      const response = await fetch('http://10.0.0.6:8086/query?' + params, myInit)
+                      const json = await response.json();
+                      if (json["results"] && json["results"][0] && json["results"][0]["series"]  && json["results"][0]["series"][0] && json["results"][0]["series"][0]["values"]) {
+                          for(var val of json["results"][0]["series"][0]["values"]) {
+                              result.push([new Date(val[0]), val[1]]);
+                          }
+                      } else {
+                          console.log("error: " + json)
+                      }
+                      console.log("return: " + json) 
+                      return result;
+                  }
+                  return request();
+              - entity: sensor.influxdb_read_2
+                type: line
+                name: Média Consumo Diário
+                color: '#1064eb'
+                extend_to: false
+                unit: Litros
+                show:
+                  in_brush: true
+                group_by:
+                  duration: 24hour
+                  func: avg
+                data_generator: |
+                  var params = new URLSearchParams({
+                      db: "fluxoagua",
+                      q: "SELECT \"litrosmedidosemseg\" FROM \"fluxoagua\".\"autogen\".\"L/min\" WHERE \"litrosmedidosemseg\" > 0 AND \"litrosmedidosemseg\" < 25; "
+                      });
+
+                  var myInit = { method: 'GET',
+                                  headers: {
+                                      'Accept': 'application/json',
+                                  },
+                                  mode: 'cors',
+                                  cache: 'default' 
+                  };
+
+                  const request = async () => {
+                      var result = [];
+                      var acumulado = 0;
+                      var index = 0;
+                      var date;
+                      const response = await fetch('http://10.0.0.6:8086/query?' + params, myInit)
+                      const json = await response.json();
+                      if (json["results"] && json["results"][0] && json["results"][0]["series"]  && json["results"][0]["series"][0] && json["results"][0]["series"][0]["values"]) {
+                          for(var val of json["results"][0]["series"][0]["values"]) {
+                              acumulado = acumulado + val[1];
+
+                              if (date instanceof Date) {                    
+                                if (date.getDay() != new Date(val[0]).getDay()) {
+                                    index++;
+                                }
+                            }
+                              date = new Date(val[0]);
+                              result.push([new Date(val[0]), val[1]]);
+                          }
+                      } else {
+                          console.log("error: " + json)
+                      }  
+                      
+                      var media = acumulado / (index +1)  
+                    
+                      for (var i = 0; i < result.length; i++) {
+                          result[i][1] = media;
+                      }
+                      console.log(result);
+                      return result;
+                  }
+                  return request(); 
+            update_interval: 1m
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Ocorrências de Possiveis vazamentos
+              show_states: false
+              colorize_states: true
+            apex_config:
+              chart:
+                extend_to: now
+              yaxis:
+                title:
+                  text: nº Ocorrências
+              stroke:
+                show: false
+                width: 1
+              legend:
+                show: true
+              experimental:
+                brush: true
+            graph_span: 1month
+            span:
+              end: day
+            series:
+              - entity: sensor.influxdb_read
+                type: column
+                name: Ocorrências
+                color: '#d10d0d'
+                extend_to: false
+                unit: Ocorrências
+                show:
+                  in_brush: true
+                  legend_value: false
+                group_by:
+                  duration: 24hour
+                  func: sum
+                data_generator: |
+                  var params = new URLSearchParams({
+                      db: "fluxoagua",
+                      q: "SELECT \"avisovazamento\" FROM \"fluxoagua\".\"autogen\".\"L/min\";"
+                      });
+
+                  var myInit = { method: 'GET',
+                                  headers: {
+                                      'Accept': 'application/json',
+                                  },
+                                  mode: 'cors',
+                                  cache: 'default' 
+                  };
+
+                  const request = async () => {
+                      var result = [];
+                      var acumulado = 0;
+                      var index = 0;
+                      var date;
+                      const response = await fetch('http://10.0.0.6:8086/query?' + params, myInit)
+                      const json = await response.json();
+                      if (json["results"] && json["results"][0] && json["results"][0]["series"]  && json["results"][0]["series"][0] && json["results"][0]["series"][0]["values"]) {
+                          for(var val of json["results"][0]["series"][0]["values"]) {
+                             
+                              date = new Date(val[0]);
+                              result.push([new Date(val[0]), val[1]]);
+                              console.log("valor: " + json)
+                          }
+                      } else {
+                          console.log("error: " + json)
+                      }  
+                      
+                      return result;
+                  }
+                  return request(); 
+            update_interval: 1m
